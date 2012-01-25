@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sparky</title>
+        <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"></script>
+        <script type="text/javascript" src="lib/d3.ie-min.js"></script>
+        <script type="text/javascript" src="src/sparky.js"></script>
+        <style type="text/css">
+            span.sparkline {
+                display: inline-block;
+                width: 10em;
+                height: 1em;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Sparky</h1>
+
+        <div class="example">
+            <table>
+                <tbody>
+                    <tr>
+                        <td><span class="sparkline"
+                            data-points="0,-1,0,-1,-2,-1,0,-1,-1,3,-2,-1,-2,-2,3,3,4,3,6,-2,-1,-3,-4,-5,-2"
+                            data-preset="TUFTE_HIGHLIGHT_LAST"></span></td>
+                        <td>glucose</td>
+                        <td>128</td>
+                    </tr>
+                    <tr>
+                        <td><span class="sparkline"
+                            data-points="0,-1,0,0,0,0,6,7,7,-2,-3,-4,-4,-3,-3,-3,-1,-1,-1,-1,-1,-2,-2,-3,-4"
+                            data-preset="TUFTE_HIGHLIGHT_LAST"></span></td>
+                        <td>respiration</td>
+                        <td>16</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <script type="text/javascript" defer>
+        document.body.onload = function() {
+            var sparks = document.querySelectorAll(".sparkline"),
+                len = sparks.length;
+            for (var i = 0; i < len; i++) {
+                var el = sparks[i],
+                    data = sparky.parse.numbers(el.getAttribute("data-points")),
+                    preset = el.getAttribute("data-preset");
+                sparks[i] = sparky.sparkline(sparks[i], data, preset);
+            }
+        };
+        </script>
+    </body>
+</html>
