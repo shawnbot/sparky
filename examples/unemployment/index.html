@@ -3,8 +3,8 @@
     <head>
         <title>Sparky</title>
         <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"></script>
-        <script type="text/javascript" src="lib/d3.ie-min.js"></script>
-        <script type="text/javascript" src="src/sparky.js"></script>
+        <script type="text/javascript" src="../../lib/d3.ie-min.js"></script>
+        <script type="text/javascript" src="../../src/sparky.js"></script>
         <style type="text/css">
             span.sparkline {
                 display: inline-block;
@@ -14,7 +14,8 @@
         </style>
     </head>
     <body>
-        <table>
+
+        <table id="unemployment">
             <thead>
                 <tr><th scope="row">Year</th><th scope="col">Jan</th><th scope="col">Feb</th><th scope="col">Mar</th><th scope="col">Apr</th><th scope="col">May</th><th scope="col">Jun</th><th scope="col">Jul</th><th scope="col">Aug</th><th scope="col">Sep</th><th scope="col">Oct</th><th scope="col">Nov</th><th scope="col">Dec</th></tr>
             </thead>
@@ -32,9 +33,11 @@
                 <tr><th scope="row">2011</th><td>9.1</td><td>9.0</td><td>8.9</td><td>9.0</td><td>9.0</td><td>9.1</td><td>9.1</td><td>9.1</td><td>9.0</td><td>8.9</td><td>8.7</td><td>8.5</td></tr>
             </tbody>
         </table>
+
         <script type="text/javascript" defer>
         document.body.onload = function() {
         };
         </script>
+
     </body>
 </html>
