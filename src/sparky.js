@@ -1,6 +1,97 @@
 (function() {
     sparky = {version: "0.1"};
 
+    var lib = sparky.lib = (typeof d3 === "object")
+        ? d3
+        : (function() {
+            var shim = {};
+
+            shim.keys = function(obj) {
+                var keys = [];
+                for (var k in obj) keys.push(k);
+                return keys;
+            };
+
+            shim.min = function(values, accessor) {
+                var min = Number.POSITIVE_INFINITY,
+                    len = values.length;
+                for (var i = 0; i < len; i++) {
+                    var val = accessor ? accessor(values[i]) : values[i];
+                    if (val < min) min = val;
+                }
+                return min;
+            };
+
+            shim.max = function(values, accessor) {
+                var max = Number.NEGATIVE_INFINITY,
+                    len = values.length;
+                for (var i = 0; i < len; i++) {
+                    var val = accessor ? accessor(values[i]) : values[i];
+                    if (val > max) max = val;
+                }
+                return max;
+            };
+
+            shim.scale = {};
+
+            // our linear scale is simpler in that it only uses one value
+            shim.scale.linear = function() {
+                var dmin = 0, dmax = 1,
+                    rmin = 0, rmax = 1,
+                    clamp = false,
+                    scale = function(val) {
+                        if (clamp) {
+                            if (val < dmin) val = dmin;
+                            if (val > dmax) val = dmax;
+                        }
+                        return rmin + (rmax - rmin) * (val - dmin) / (dmax - dmin);
+                    };
+
+                scale.clamp = function(c) {
+                    if (arguments.length) {
+                        clamp = c;
+                        return scale;
+                    } else {
+                        return clamp;
+                    }
+                };
+
+                scale.domain = function(domain) {
+                    if (arguments.length) {
+                        dmin = domain[0];
+                        dmax = domain[1];
+                        return scale;
+                    } else {
+                        return [dmin, dmax];
+                    }
+                };
+
+                scale.range = function(range) {
+                    if (arguments.length) {
+                        rmin = range[0];
+                        rmax = range[1];
+                        return scale;
+                    } else {
+                        return [rmin, rmax];
+                    }
+                };
+
+                return scale;
+            };
+
+            shim.identity = function(v) {
+                return v;
+            };
+
+            shim.functor = function(v) {
+                return (typeof v === "function")
+                    ? v
+                    : function() { return v; };
+            };
+
+            return shim;
+        })();
+
     sparky.sparkline = function(parent, data, options) {
         // attempt to query the document for the provided selector
         if (typeof parent === "string") {
@@ -10,15 +101,14 @@
         options = (typeof options === "string")
             ? _extend(sparky.sparkline.defaults, sparky.presets[options])
             : _extend(sparky.sparkline.defaults, options || {});
-        console.log(options);
 
         // remember the length of the data array
         var LEN = data.length;
         // VAL is a value getter for each datum
-        var VAL = _getter_or_functor(options.value);
+        var VAL = lib.functor(options.value);
         // figure out the minimum and maximum values
-        var MIN = isNaN(options.min) ? d3.min(data, VAL) : options.min,
-            MAX = isNaN(options.max) ? d3.max(data, VAL) : options.max;
+        var MIN = isNaN(options.min) ? lib.min(data, VAL) : options.min,
+            MAX = isNaN(options.max) ? lib.max(data, VAL) : options.max;
 
         // determine the sparkline's dimensions
         var SIZE = _size(parent),
@@ -28,10 +118,10 @@
         var PADDING = options.padding || 0;
 
         // create the x and y scales
-        var XX = d3.scale.linear()
+        var XX = lib.scale.linear()
                 .domain([0, LEN - 1])
                 .range([PADDING, WIDTH - PADDING]),
-            YY = d3.scale.linear()
+            YY = lib.scale.linear()
                 .domain([MIN, MAX])
                 .range([HEIGHT - PADDING, PADDING]);
 
@@ -61,26 +151,32 @@
 
         // if "area_fill" was provided, push some more points onto the array
         if (options.area_fill && options.area_fill !== "none") {
-            var bottom = YY.range()[0];
-            points.push({x: XX(LEN - 1), y: bottom});
-            points.push({x: XX(0), y: bottom});
-            points.push(points[0]);
+            var bottom = YY.range()[0],
+                br = {x: XX(LEN - 1), y: bottom},
+                bl = {x: XX(0), y: bottom};
+            points.push(br);
+            points.push(bl);
+            // points.push(points[0]);
         }
 
+        var path = [];
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            path.push((i === 0) ? "M" : "L", p.x, ",", p.y);
+        }
+        path.push("Z");
         // generate the path, and set its fill and stroke attributes
-        var line = paper.path(points.map(function(p, i) {
-                return [(i === 0) ? "M" : "L", p.x, ",", p.y].join("");
-            }).join(","))
+        var line = paper.path(path.join(" "))
             .attr("class", "line")
             .attr("fill", options.area_fill || "none")
             .attr("stroke", options.line_stroke || options.color || "black")
             .attr("stroke-width", options.line_stroke_width || 1.5);
 
         // define our radius and color getters for dots
-        var dot_radius = _functor(options.dot_radius),
-            dot_fill = _functor(options.dot_fill || options.color || "black"),
-            dot_stroke = _functor(options.dot_stroke || "none"),
-            dot_stroke_width = _functor(options.dot_stroke_width || "none");
+        var dot_radius = lib.functor(options.dot_radius),
+            dot_fill = lib.functor(options.dot_fill || options.color || "black"),
+            dot_stroke = lib.functor(options.dot_stroke || "none"),
+            dot_stroke_width = lib.functor(options.dot_stroke_width || "none");
 
         // create a Raphael set for the dots
         var dots = paper.set();
@@ -134,7 +230,7 @@
         // the value function (or key string) tells sparkline() how to extract
         // values from the data array. _identity() returns the value provided,
         // so it acts like a passthru for array values. See also: d3.identity()
-        value:              _identity,
+        value:              lib.identity,
         // the color of the sparkline's line
         line_stroke:        "black",
         // the stroke width of the sparkline's line
@@ -186,7 +282,7 @@
             }
         }
 
-        if (!keys) keys = d3.keys(sparky.sparkline.defaults);
+        if (!keys) keys = lib.keys(sparky.sparkline.defaults);
         var len = keys.length;
         for (var i = 0; i < len; i++) {
             var key = keys[i],
@@ -297,24 +393,6 @@
             o[k] = options[k];
         }
         return o;
-    }
-
-    function _functor(accessor, def) {
-        return (typeof accessor === "function")
-            ? accessor
-            : def || function() { return accessor; };
-    }
-
-    function _getter(prop) {
-        return function(o) { return o[prop]; };
-    }
-
-    function _identity(o) { return o; }
-
-    function _getter_or_functor(value, def) {
-        return (typeof value === "function")
-            ? value
-            : def || _identity;
     }
 
 })();
