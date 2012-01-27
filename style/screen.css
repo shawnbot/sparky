@@ -1,0 +1,49 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Hoefler Text", "Times New Roman", Georgia, serif;
+    font-size: 18px;
+    line-height: 24px;
+    padding: 2em 3em;
+}
+
+span.sparkline {
+    display: inline-block;
+    width: 5em;
+    height: 1em;
+    margin: 0 .2em;
+    vertical-align: top;
+}
+
+label, var {
+    font-family: "Trebuchet MS", "Arial Rounded MT Bold", sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 80%;
+}
+
+var {
+    color: red;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-style: italic;
+    font-weight: normal;
+}
+
+blockquote {
+    color: #333;
+    font-size: 90%;
+}
+
+blockquote small {
+    text-align: right;
+    display: block;
+}
+
+*.fw {
+    font-variant: small-caps;
+}
