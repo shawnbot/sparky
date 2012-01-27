@@ -156,7 +156,7 @@
                 bl = {x: XX(0), y: bottom};
             points.push(br);
             points.push(bl);
-            // points.push(points[0]);
+            points.push(points[0]);
         }
 
         var path = [];
@@ -164,7 +164,7 @@
             var p = points[i];
             path.push((i === 0) ? "M" : "L", p.x, ",", p.y);
         }
-        path.push("Z");
+        // path.push("Z");
         // generate the path, and set its fill and stroke attributes
         var line = paper.path(path.join(" "))
             .attr("class", "line")
