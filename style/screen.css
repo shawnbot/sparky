@@ -10,6 +10,11 @@ body {
     padding: 2em 3em;
 }
 
+a:link, a:visited {
+    color: inherit;
+    text-decoration: underline;
+}
+
 span.sparkline {
     display: inline-block;
     width: 5em;

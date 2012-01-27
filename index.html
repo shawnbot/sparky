@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>Sparky</title>
-        <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"></script>
+        <script type="text/javascript" src="lib/raphael/raphael-min.js"></script>
         <script type="text/javascript" src="lib/d3.ie-min.js"></script>
         <script type="text/javascript" src="src/sparky.js"></script>
         <style type="text/css">
@@ -10,37 +10,54 @@
         </style>
     </head>
     <body>
-        <h1>Sparky</h1>
         <div id="intro">
+            <h1>Sparky</h1>
+
             <p><a class="fw">Sparklines</a> are intense, simple, word-sized graphics.
             <i>Sparky</i> is a JavaScript library that makes them easy to create and
-            style. In the words of Edward Tufte,</p>
+            style. In the words of <a href="http://www.edwardtufte.com">Edward Tufte</a>,
+            who coined the term:</p>
+
+            <blockquote>
+                Sparklines mean that graphics are no longer cartoonish special
+                occasions with captions and boxes, but rather a sparkline graphic
+                can be everywhere a word or number can be: embedded in a sentence,
+                table, headline, map, spreadsheet, graphic.
+            </blockquote>
+
+            <p>You can read more about sparklines on
+            <a href="http://en.wikipedia.org/wiki/Sparkline">Wikipedia</a>,
+            <a href="http://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=0001OR">Tufte's site</a>,
+            or in his book, <a href="http://www.edwardtufte.com/tufte/books_be"><i>Beautiful Evidence</i></a>.</p>
         </div>
 
-        <blockquote>
-            Sparklines mean that graphics are no longer cartoonish special
-            occasions with captions and boxes, but rather a sparkline graphic
-            can be everywhere a word or number can be: embedded in a sentence,
-            table, headline, map, spreadsheet, graphic.
-        </blockquote>
+        <div id="examples">
+            <h2>Examples</h2>
 
-        <h2>Examples</h2>
+            <div class="example">
+                <p><span class="sparkline"
+                    data-points="145,136,145,136,127,136,145,136,136,172,127,136,127,127,172,172,181,172,200,127,136,118,109,100,128"
+                    data-preset="tufte:hilite-last"></span>
+                    <label>glucose</label> <var>128</var></p>
+                <p><span class="sparkline"
+                    data-points="20,19,20,20,20,20,20,20,25,25,18,14,14,18,18,20,20,20,18,18,16,16"
+                    data-range_min="16"
+                    data-range_max="20"
+                    data-preset="tufte:hilite-last"></span>
+                    <label>respiration</label> <var>16</var></p>
+                <p><span class="sparkline"
+                    data-points="10,12,11,28,29,27,22,10,9,10,10,35"
+                    data-preset="gray-area"></span></td>
+                <label>elevation</label></p>
+            </div>
+        </div>
 
-        <div class="example">
-            <p><span class="sparkline"
-                data-points="145,136,145,136,127,136,145,136,136,172,127,136,127,127,172,172,181,172,200,127,136,118,109,100,128"
-                data-preset="tufte:hilite-last"></span>
-                <label>glucose</label> <var>128</var></p>
-            <p><span class="sparkline"
-                data-points="20,19,20,20,20,20,20,20,25,25,18,14,14,18,18,20,20,20,18,18,16,16"
-                data-range_min="16"
-                data-range_max="20"
-                data-preset="tufte:hilite-last"></span>
-                <label>respiration</label> <var>16</var></p>
-            <p><span class="sparkline"
-                data-points="10,12,11,28,29,27,22,10,9,10,10,35"
-                data-preset="gray-area"></span></td>
-            <label>elevation</label></p>
+        <div id="about">
+            <h2>About</h2>
+            <p><i>Sparky</i> is a project by <a href="http://stamen.com/studio/shawn">Shawn Allen</a>,
+            Design Director at <a href="http://stamen.com">Stamen</a>. It relies heavily on
+            <a href="http://mbostock.github.com/d3/">d3.js</a> and
+            <a href="http://raphaeljs.com/">Rapha&euml;l</a>.</p>
         </div>
 
         <script type="text/javascript" defer>
