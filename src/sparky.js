@@ -1,42 +1,6 @@
 (function() {
     sparky = {version: "0.1"};
 
-    function getSize(el) {
-        return {
-            width: ~~el.offsetWidth,
-            height: ~~el.offsetHeight
-        };
-    }
-
-    function extend(defaults, options) {
-        var o = {};
-        for (var k in defaults) {
-            o[k] = defaults[k];
-        }
-        for (var k in options) {
-            o[k] = options[k];
-        }
-        return o;
-    }
-
-    function functor(getter, def) {
-        return (typeof getter === "function")
-            ? getter
-            : def || function() { return getter; };
-    }
-
-    function getter(prop) {
-        return function(o) { return o[prop]; };
-    }
-
-    function identity(o) { return o; }
-
-    function getter_or_functor(value, def) {
-        return (typeof value === "function")
-            ? value
-            : def || identity;
-    }
-
     sparky.sparkline = function(parent, data, options) {
         // attempt to query the document for the provided selector
         if (typeof parent === "string") {
@@ -44,19 +8,20 @@
         }
         // merge defaults and options, or fetch presets
         options = (typeof options === "string")
-            ? extend(sparky.sparkline.defaults, PRESETS[options])
-            : extend(sparky.sparkline.defaults, options || {});
+            ? _extend(sparky.sparkline.defaults, sparky.presets[options])
+            : _extend(sparky.sparkline.defaults, options || {});
+        console.log(options);
 
         // remember the length of the data array
         var LEN = data.length;
         // VAL is a value getter for each datum
-        var VAL = getter_or_functor(options.value);
+        var VAL = _getter_or_functor(options.value);
         // figure out the minimum and maximum values
-        var MIN = d3.min(data, VAL),
-            MAX = d3.max(data, VAL);
+        var MIN = isNaN(options.min) ? d3.min(data, VAL) : options.min,
+            MAX = isNaN(options.max) ? d3.max(data, VAL) : options.max;
 
         // determine the sparkline's dimensions
-        var SIZE = getSize(parent),
+        var SIZE = _size(parent),
             WIDTH = options.width || SIZE.width,
             HEIGHT = options.height || SIZE.height;
         // padding is the number of pixels to inset from the edges
@@ -73,6 +38,19 @@
         // create our Raphael surface
         var paper = Raphael(parent, WIDTH, HEIGHT);
 
+        if (options.range_fill && options.range_fill != "none") {
+            // FIXME: complain if range_min and range_max aren't defined?
+            var ry1 = YY(options.range_max),
+                ry2 = YY(options.range_min);
+            // only create a rect
+            if (ry1 != ry2) {
+                rect = paper.rect(PADDING, ry1, WIDTH - PADDING * 2, ry2 - ry1)
+                    .attr("class", "range")
+                    .attr("stroke", "none")
+                    .attr("fill", options.range_fill);
+            }
+        }
+
         // create an array of screen coordinates for each datum
         var points = [];
         for (var i = 0; i < LEN; i++) {
@@ -83,7 +61,7 @@
 
         // if "area_fill" was provided, push some more points onto the array
         if (options.area_fill && options.area_fill !== "none") {
-            var bottom = YY(MIN);
+            var bottom = YY.range()[0];
             points.push({x: XX(LEN - 1), y: bottom});
             points.push({x: XX(0), y: bottom});
             points.push(points[0]);
@@ -93,14 +71,16 @@
         var line = paper.path(points.map(function(p, i) {
                 return [(i === 0) ? "M" : "L", p.x, ",", p.y].join("");
             }).join(","))
+            .attr("class", "line")
             .attr("fill", options.area_fill || "none")
-            .attr("stroke-width", options.line_stroke_width || 1.5)
-            .attr("stroke", options.line_stroke || options.color || "black");
+            .attr("stroke", options.line_stroke || options.color || "black")
+            .attr("stroke-width", options.line_stroke_width || 1.5);
 
         // define our radius and color getters for dots
-        var RADIUS = functor(options.dot_radius),
-            COLOR = functor(options.dot_fill || options.color || "black"),
-            TITLE = functor(options.dot_title);
+        var dot_radius = _functor(options.dot_radius),
+            dot_fill = _functor(options.dot_fill || options.color || "black"),
+            dot_stroke = _functor(options.dot_stroke || "none"),
+            dot_stroke_width = _functor(options.dot_stroke_width || "none");
 
         // create a Raphael set for the dots
         var dots = paper.set();
@@ -122,70 +102,219 @@
                     min: val <= MIN
                 },
                 // get the radius
-                r = RADIUS.call(meta, data[i], i),
+                r = dot_radius.call(meta, data[i], i);
+            // only create the dot if the radius > 0
+            if (r > 0 && !isNaN(r)) {
                 // create the dot
                 dot = paper.circle(point.x, point.y)
-                    .attr("stroke", "none")
-                    .attr("r", r);
-            // set the fill if the radius > 0
-            if (r > 0) {
-                dot.attr("fill", COLOR.call(meta, data[i], i));
+                    .attr("r", r)
+                    .attr("class", "dot")
+                    .attr("stroke", dot_stroke.call(meta, data[i], i))
+                    .attr("stroke-width", dot_stroke_width.call(meta, data[i], i))
+                    .attr("fill", dot_fill.call(meta, data[i], i));
+                dots.push(dot);
             }
-            dots.push(dot);
         }
 
         return paper;
     };
 
-    sparky.parse = {};
-    sparky.parse.numbers = function(str, parser) {
-        var numbers = str.split(/\s*,\s*/),
-            len = numbers.length;
-        if (!parser) parser = Number;
-        for (var i = 0; i < len; i++) {
-            numbers[i] = parser(numbers[i]);
-        }
-        return numbers;
-    };
-
+    // sparkline() option defaults
     sparky.sparkline.defaults = {
         width:              0, // 0 means "use the intrinsic width"
         height:             0, // 0 means "use the intrinsic height"
+        // increase the padding to avoid cutting off dots with larger radii.
         padding:            2,
+        // "area_fill" enables area rendering and defines the area's fill color
         area_fill:          null,
-        value:              d3.identity,
+        // TODO: document
+        range_min:          0,
+        range_max:          0,
+        range_fill:         null,
+        // the value function (or key string) tells sparkline() how to extract
+        // values from the data array. _identity() returns the value provided,
+        // so it acts like a passthru for array values. See also: d3.identity()
+        value:              _identity,
+        // the color of the sparkline's line
         line_stroke:        "black",
+        // the stroke width of the sparkline's line
         line_stroke_width:  1,
+        // the fill color of the sparkline's dots, or a function that returns a
+        // color for each datum. The function receives two arguments:
+        // function(datum, index) { }
+        // and the "this" context is a metadata object with properties that let
+        // you know if this datum is the first, last, min or max value in the
+        // data array.
         dot_fill:           "black",
-        dot_radius:         2
+        // the radius of the sparkline's dots, or a function that returns the
+        // radius for each datum, as above with "dot_fill".
+        dot_radius:         0
     };
 
-    var PRESETS = sparky.sparkline.presets = {};
+    // Utility parsing functions
+    sparky.parse = {};
+    (function() {
 
-    // from: http://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=0001OR
-    PRESETS["TUFTE_HIGHLIGHT_LAST"] = {
-        line_stroke: "#bbb",
-        line_stroke_width: 1.5,
-        dot_fill: "#f00",
-        dot_radius: function(d, i) {
-            return this.last ? 2 : 0;
+        var split = sparky.parse.split = function(str) {
+            return str.split(/\s*,\s*/);
+        };
+
+        sparky.parse.numbers = function(str, parser) {
+            var numbers = split(str),
+                len = numbers.length;
+            if (!parser) parser = Number;
+            for (var i = 0; i < len; i++) {
+                numbers[i] = parser(numbers[i]);
+            }
+            return numbers;
+        };
+
+    })();
+
+    sparky.util = {};
+
+    sparky.util.getElementOptions = function(element, defaults, keys) {
+        var options = {};
+
+        function _option(key) {
+            var value = element.getAttribute("data-" + key);
+            if (value) {
+                var num = Number(value);
+                return isNaN(num) ? value : num;
+            } else {
+                return null;
+            }
         }
+
+        if (!keys) keys = d3.keys(sparky.sparkline.defaults);
+        var len = keys.length;
+        for (var i = 0; i < len; i++) {
+            var key = keys[i],
+                val = _option(key);
+            if (val !== null) {
+                options[key] = val;
+            }
+        }
+        return defaults ? _extend(defaults, options) : options;
     };
 
-    // from: http://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=0001OR
-    PRESETS["TUFTE_HIGHLIGHT_PEAKS"] = {
-        line_stroke: "#bbb",
-        line_stroke_width: 1.5,
-        dot_fill: function(d, i) {
-            return (this.min || this.max)
-                ? "#339ACF"
-                : "#f00";
-        },
-        dot_radius: function(d, i) {
-            return (this.first || this.last || this.min || this.max)
-                ? 2
-                : 0;
-        }
+    // Presets!
+    sparky.presets = {};
+
+    /**
+     * Register a named preset:
+     * sparky.presets.set("big-blue", {
+     *   line_stroke: "blue",
+     *   line_stroke_width: 2
+     * });
+     */
+    sparky.presets.set = function(id, options) {
+        sparky.presets[id] = options;
     };
+
+    /**
+     * Get a named preset:
+     * sparky.presets.get("big-blue");
+     */
+    sparky.presets.get = function(id, options) {
+        return sparky.presets[id];
+    };
+
+    /**
+     * Copy a named preset and override select options:
+     * sparky.sparkline.presets.set("big-green", {
+     *   line_stroke: "green"
+     * });
+     */
+    sparky.presets.extend = function(id, base, options) {
+        sparky.presets[id] = _extend(sparky.presets[base], options);
+    };
+
+    // a nice preset for fill
+    sparky.presets.set("gray-area", {
+        min:            0,
+        dot_radius:     0,
+        padding:        0,
+        area_fill:      "#999",
+        line_stroke:    "none"
+    });
+
+    /*
+     * Tufte-esque presets inspired by:
+     * http://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=0001OR
+     */
+    (function() {
+        var ns = "tufte:";
+
+        sparky.presets.set(ns + "hilite-last", {
+            line_stroke:        "#888",
+            line_stroke_width:  1,
+            range_fill:         "#ddd",
+            dot_fill:           "#f00",
+            dot_radius: function(d, i) {
+                return this.last ? 2 : 0;
+            }
+        });
+
+        sparky.presets.extend(ns + "hilite-peaks", ns + "hilite-last", {
+            dot_fill: function(d, i) {
+                return (this.first || this.last)
+                    ? "#f00"
+                    : (this.min || this.max)
+                      ? "#339ACF"
+                      : null;
+            },
+            dot_radius: function(d, i) {
+                return (this.first || this.last || this.min || this.max)
+                    ? 2
+                    : 0;
+            }
+        });
+    })();
+
+    // internal utility functions:
+
+    /**
+     * Get the intrinsic size ({width, height}) of an element in round pixels.
+     */
+    function _size(el) {
+        return {
+            width: ~~el.offsetWidth,
+            height: ~~el.offsetHeight
+        };
+    }
+
+    /**
+     * Override all of the iterable properties in the first object so that they
+     * contain the values of the second, and return it as a new object.
+     */
+    function _extend(defaults, options) {
+        var o = {};
+        for (var k in defaults) {
+            o[k] = defaults[k];
+        }
+        for (var k in options) {
+            o[k] = options[k];
+        }
+        return o;
+    }
+
+    function _functor(accessor, def) {
+        return (typeof accessor === "function")
+            ? accessor
+            : def || function() { return accessor; };
+    }
+
+    function _getter(prop) {
+        return function(o) { return o[prop]; };
+    }
+
+    function _identity(o) { return o; }
+
+    function _getter_or_functor(value, def) {
+        return (typeof value === "function")
+            ? value
+            : def || _identity;
+    }
 
 })();
