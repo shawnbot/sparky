@@ -15,12 +15,17 @@ a:link, a:visited {
     text-decoration: underline;
 }
 
+p.caption {
+    font-size: 90%;
+    font-style: italic;
+}
+
 span.sparkline {
     display: inline-block;
     width: 5em;
-    height: 1em;
+    height: 15px;
     margin: 0 .2em;
-    vertical-align: top;
+    vertical-align: baseline;
 }
 
 label, var {
@@ -34,9 +39,21 @@ var {
     color: red;
 }
 
+p {
+    margin: 0 0 1em 0;
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-style: italic;
     font-weight: normal;
+}
+
+h3 {
+    float: left;
+    display: inline;
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0 .75em 0 0;
 }
 
 blockquote {

@@ -6,12 +6,15 @@
         : (function() {
             var shim = {};
 
+            // like d3.keys(), returns an array of the object's keys
             shim.keys = function(obj) {
                 var keys = [];
                 for (var k in obj) keys.push(k);
                 return keys;
             };
 
+            // returns the minimum value in an array, optionally derived from
+            // an accessor function
             shim.min = function(values, accessor) {
                 var min = Number.POSITIVE_INFINITY,
                     len = values.length;
@@ -22,6 +25,8 @@
                 return min;
             };
 
+            // returns the maximum value in an array, optionally derived from
+            // an accessor function
             shim.max = function(values, accessor) {
                 var max = Number.NEGATIVE_INFINITY,
                     len = values.length;
@@ -79,10 +84,13 @@
                 return scale;
             };
 
+            // the identity function returns the value provided
             shim.identity = function(v) {
                 return v;
             };
 
+            // coerce a value into the identity function if it's not a
+            // function already
             shim.functor = function(v) {
                 return (typeof v === "function")
                     ? v
@@ -103,30 +111,30 @@
             : _extend(sparky.sparkline.defaults, options || {});
 
         // remember the length of the data array
-        var LEN = data.length;
-        // VAL is a value getter for each datum
-        var VAL = lib.functor(options.value);
+        var data_len = data.length;
+        // get_val() is a value getter for each datum
+        var get_val = lib.functor(options.value);
         // figure out the minimum and maximum values
-        var MIN = isNaN(options.min) ? lib.min(data, VAL) : options.min,
-            MAX = isNaN(options.max) ? lib.max(data, VAL) : options.max;
+        var dmin = isNaN(options.min) ? lib.min(data, get_val) : options.min,
+            dmax = isNaN(options.max) ? lib.max(data, get_val) : options.max;
 
         // determine the sparkline's dimensions
-        var SIZE = _size(parent),
-            WIDTH = options.width || SIZE.width,
-            HEIGHT = options.height || SIZE.height;
+        var size = _size(parent),
+            padding = options.padding || 0,
+            width = options.width || size.width,
+            height = options.height || size.height;
         // padding is the number of pixels to inset from the edges
-        var PADDING = options.padding || 0;
 
         // create the x and y scales
         var XX = lib.scale.linear()
-                .domain([0, LEN - 1])
-                .range([PADDING, WIDTH - PADDING]),
+                .domain([0, data_len - 1])
+                .range([padding, width - padding]),
             YY = lib.scale.linear()
-                .domain([MIN, MAX])
-                .range([HEIGHT - PADDING, PADDING]);
+                .domain([dmin, dmax])
+                .range([height - padding, padding]);
 
         // create our Raphael surface
-        var paper = Raphael(parent, WIDTH, HEIGHT);
+        var paper = Raphael(parent, width, height);
 
         if (options.range_fill && options.range_fill != "none") {
             // FIXME: complain if range_min and range_max aren't defined?
@@ -134,7 +142,7 @@
                 ry2 = YY(options.range_min);
             // only create a rect
             if (ry1 != ry2) {
-                rect = paper.rect(PADDING, ry1, WIDTH - PADDING * 2, ry2 - ry1)
+                rect = paper.rect(padding, ry1, width - padding * 2, ry2 - ry1)
                     .attr("class", "range")
                     .attr("stroke", "none")
                     .attr("fill", options.range_fill);
@@ -143,7 +151,7 @@
 
         // create an array of screen coordinates for each datum
         var points = [];
-        for (var i = 0; i < LEN; i++) {
+        for (var i = 0; i < data_len; i++) {
             var x = XX(i),
                 y = YY(data[i]);
             points.push({x: x, y: y});
@@ -152,7 +160,7 @@
         // if "area_fill" was provided, push some more points onto the array
         if (options.area_fill && options.area_fill !== "none") {
             var bottom = YY.range()[0],
-                br = {x: XX(LEN - 1), y: bottom},
+                br = {x: XX(data_len - 1), y: bottom},
                 bl = {x: XX(0), y: bottom};
             points.push(br);
             points.push(bl);
@@ -172,43 +180,111 @@
             .attr("stroke", options.line_stroke || options.color || "black")
             .attr("stroke-width", options.line_stroke_width || 1.5);
 
-        // define our radius and color getters for dots
-        var dot_radius = lib.functor(options.dot_radius),
-            dot_fill = lib.functor(options.dot_fill || options.color || "black"),
-            dot_stroke = lib.functor(options.dot_stroke || "none"),
-            dot_stroke_width = lib.functor(options.dot_stroke_width || "none");
+        // bars and dots are mutually exclusive;
+        // if there's a bar_fill option, assume they want bars
+        if (options.bar_fill && options.bar_fill != "none") {
+            var baseline = isNaN(options.baseline) ? 0 : options.baseline,
+                actual_min = Math.min(dmin, baseline),
+                spread = dmax - dmin;
 
-        // create a Raphael set for the dots
-        var dots = paper.set();
-        // (and stash it on the paper object for later use)
-        paper.dots = dots;
-        for (var i = 0; i < LEN; i++) {
-            // get the screen coordinate and the value,
-            var point = points[i],
-                val = VAL(data[i]),
-                // generate some metadata:
-                meta = {
-                    // true if it's first in the list
-                    first: i == 0,
-                    // true if it's last in the list
-                    last: i == LEN - 1,
-                    // true if it's >= maximum value
-                    max: val >= MAX,
-                    // true if it's <= minimum value
-                    min: val <= MIN
-                },
-                // get the radius
-                r = dot_radius.call(meta, data[i], i);
-            // only create the dot if the radius > 0
-            if (r > 0 && !isNaN(r)) {
+            var avail_height = (height - padding * 2),
+                avail_width = (width - padding * 2);
+
+            // define our bar fill and positioning parameters
+            var bar_fill = lib.functor(options.bar_fill || options.color || "black"),
+                bar_spacing = isNaN(options.bar_spacing) ? 0 : options.bar_spacing,
+                bar_width = (avail_width - bar_spacing * (data_len - 1)) / data_len;
+
+            // proportional height
+            var BH = function(val) {
+                return avail_height * ((val >= baseline)
+                    ? (val - baseline) / spread
+                    : (baseline - val) / spread);
+            };
+            var BY = lib.scale.linear()
+                .domain([baseline, dmax])
+                .range([height - padding - BH(actual_min), padding])
+                .clamp(true);
+            var BX = lib.scale.linear()
+                .domain([0, data_len - 1])
+                .range([padding, padding + avail_width - bar_width]);
+
+            var y0 = BY(baseline);
+
+            // create a Raphael set for the bars
+            var bars = paper.set();
+            // (and stash it on the paper object for later use)
+            paper.bars = bars;
+            for (var i = 0; i < data_len; i++) {
+                // get the screen coordinate and the value,
+                var val = get_val(data[i]),
+                    x = BX(i),
+                    y = BY(val),
+                    h = BH(val),
+                    // generate some metadata:
+                    meta = {
+                        // true if it's first in the list
+                        first: i == 0,
+                        // true if it's last in the list
+                        last: i == data_len - 1,
+                        // true if it's >= maximum value
+                        max: val >= dmax,
+                        // true if it's <= minimum value
+                        min: val <= dmin,
+                        // true if it's above the baseline
+                        above: val >= baseline,
+                        // true if it's below the baseline
+                        below: val <= baseline
+                    };
                 // create the dot
-                dot = paper.circle(point.x, point.y)
-                    .attr("r", r)
-                    .attr("class", "dot")
-                    .attr("stroke", dot_stroke.call(meta, data[i], i))
-                    .attr("stroke-width", dot_stroke_width.call(meta, data[i], i))
-                    .attr("fill", dot_fill.call(meta, data[i], i));
-                dots.push(dot);
+                var bar = paper.rect(x, y, bar_width, h)
+                    .attr("class", "bar")
+                    .attr("stroke", "none")
+                    .attr("fill", bar_fill.call(meta, data[i], i));
+                bars.push(bars);
+            }
+
+        // otherwise, do the dots
+        } else {
+
+            // define our radius and color getters for dots
+            var dot_radius = lib.functor(options.dot_radius),
+                dot_fill = lib.functor(options.dot_fill || options.color || "black"),
+                dot_stroke = lib.functor(options.dot_stroke || "none"),
+                dot_stroke_width = lib.functor(options.dot_stroke_width || "none");
+
+            // create a Raphael set for the dots
+            var dots = paper.set();
+            // (and stash it on the paper object for later use)
+            paper.dots = dots;
+            for (var i = 0; i < data_len; i++) {
+                // get the screen coordinate and the value,
+                var point = points[i],
+                    val = get_val(data[i]),
+                    // generate some metadata:
+                    meta = {
+                        // true if it's first in the list
+                        first: i == 0,
+                        // true if it's last in the list
+                        last: i == data_len - 1,
+                        // true if it's >= maximum value
+                        max: val >= dmax,
+                        // true if it's <= minimum value
+                        min: val <= dmin
+                    },
+                    // get the radius
+                    r = dot_radius.call(meta, data[i], i);
+                // only create the dot if the radius > 0
+                if (r > 0 && !isNaN(r)) {
+                    // create the dot
+                    var dot = paper.circle(point.x, point.y)
+                        .attr("r", r)
+                        .attr("class", "dot")
+                        .attr("stroke", dot_stroke.call(meta, data[i], i))
+                        .attr("stroke-width", dot_stroke_width.call(meta, data[i], i))
+                        .attr("fill", dot_fill.call(meta, data[i], i));
+                    dots.push(dot);
+                }
             }
         }
 
@@ -244,7 +320,14 @@
         dot_fill:           "black",
         // the radius of the sparkline's dots, or a function that returns the
         // radius for each datum, as above with "dot_fill".
-        dot_radius:         0
+        dot_radius:         0,
+
+        // bar fill, defined either as a color function(datum, index)
+        bar_fill:           null,
+        // spacing between bars, in pixels
+        bar_spacing:        1,
+        // baseline value below which bars will also be drawn below
+        baseline:           0
     };
 
     // Utility parsing functions
@@ -339,34 +422,51 @@
      * Tufte-esque presets inspired by:
      * http://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=0001OR
      */
-    (function() {
-        var ns = "tufte:";
 
-        sparky.presets.set(ns + "hilite-last", {
-            line_stroke:        "#888",
-            line_stroke_width:  1,
-            range_fill:         "#ddd",
-            dot_fill:           "#f00",
-            dot_radius: function(d, i) {
-                return this.last ? 2 : 0;
-            }
-        });
+    sparky.presets.set("hilite-last", {
+        line_stroke:        "#888",
+        line_stroke_width:  1,
+        range_fill:         "#ddd",
+        dot_fill:           "#f00",
+        dot_radius: function(d, i) {
+            return this.last ? 2 : 0;
+        }
+    });
 
-        sparky.presets.extend(ns + "hilite-peaks", ns + "hilite-last", {
-            dot_fill: function(d, i) {
-                return (this.first || this.last)
-                    ? "#f00"
-                    : (this.min || this.max)
-                      ? "#339ACF"
-                      : null;
-            },
-            dot_radius: function(d, i) {
-                return (this.first || this.last || this.min || this.max)
-                    ? 2
-                    : 0;
-            }
-        });
-    })();
+    sparky.presets.extend("hilite-peaks", "hilite-last", {
+        dot_fill: function(d, i) {
+            return (this.first || this.last)
+                ? "#f00"
+                : (this.min || this.max)
+                  ? "#339ACF"
+                  : null;
+        },
+        dot_radius: function(d, i) {
+            return (this.first || this.last || this.min || this.max)
+                ? 2
+                : 0;
+        }
+    });
+
+    sparky.presets.set("zero-bars", {
+        padding:            0,
+        line_stroke:        "none",
+        dot_fill:           "none",
+        bar_fill: function(d, i) {
+            return this.above ? "black" : "red";
+        }
+    });
+
+    sparky.presets.set("binary", {
+        padding:        0,
+        line_stroke:    "none",
+        dot_fill:       "none",
+        bar_fill:       "#333",
+        bar_spacing:    .5,
+        baseline:       0,
+        min:            -1,
+        max:            +1
+    });
 
     // internal utility functions:
 

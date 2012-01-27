@@ -34,27 +34,76 @@
             <h2>Examples</h2>
 
             <div class="example">
+
                 <p><span class="sparkline"
                     data-points="145,136,145,136,127,136,145,136,136,172,127,136,127,127,172,172,181,172,200,127,136,118,109,100,128"
-                    data-preset="tufte:hilite-last"></span>
+                    data-preset="hilite-last"></span>
                     <label>glucose</label> <var>128</var></p>
+
                 <p><span class="sparkline"
                     data-points="20,19,20,20,20,20,20,20,25,25,18,14,14,18,18,20,20,20,18,18,16,16"
                     data-range_min="16"
                     data-range_max="20"
-                    data-preset="tufte:hilite-last"></span>
+                    data-preset="hilite-last"></span>
                     <label>respiration</label> <var>16</var></p>
+
                 <p><span class="sparkline"
-                    data-points="10,12,11,28,29,27,22,10,9,10,10,35"
+                    data-points="-1,-2,-2,-4,-3,-1,1,1,2,3,5,3,2,3,4"
+                    data-baseline="0"
+                    data-preset="zero-bars"></span></td>
+                <label>some bars</label></p>
+
+                <p><span class="sparkline"
+                    data-points="10,12,11,16,28,29,27,24,22,15,10,9,10,10,26,35,32,28,24,23,21,20"
                     data-preset="gray-area"></span></td>
-                <label>elevation</label></p>
+                <label>an elevation profile</label></p>
+
+                <p><span class="sparkline"
+                    data-points="1,1,-1,1,-1,-1,-1,1,0,-1,1,1,-1,1,-1,1,-1,-1,1,0,1,1,1,1,-1,-1,1,1,-1,1,-1,-1,1,-1,-1,0,1"
+                    data-preset="binary"></span></td>
+                <label>binary data</label></p>
+
             </div>
+        </div>
+
+        <div id="features">
+            <h2>Features</h2>
+
+            <h3>What it do</h3>
+            <p>Sparky does simple line
+            <span class="sparkline" data-preset="hilite-last" data-points="5,6,8,7,5,3,2,3,8,7"></span>,
+            bar <span class="sparkline" data-preset="zero-bars" data-points="5,6,8,7,5,3,2,3,8,7"></span>, and
+            area <span class="sparkline" data-preset="gray-area" data-points="5,6,8,7,5,3,2,3,8,7"></span>
+            charts. Line and area charts can include variably colored and sized dots
+            <span class="sparkline" data-preset="rainbow" data-points="5,6,8,7,5,3,2,3,8,7"></span>.
+            Both dot and bar colors can be defined either as a single value
+            for the entire data set, or as functions to be evaluated once per
+            data point.</p>
+
+            <p>Sparky can also be used to make large time series graphics:</p>
+
+            <div class="sparkline"
+                data-preset="big"
+                data-points="9.1,9.0,8.9,9.0,9.0,9.1,9.1,9.1,9.0,8.9,8.7,8.5">
+                <p class="caption">2011 Unemployment rate for persons 16 and over, from the <a href="http://data.bls.gov/timeseries/LNS14000000">Bureau of Labor Statistics</a></p>
+            </div>
+
+            <h3>What it don&rsquo;t</h3>
+            <p>Sparky does not support chart axes (or any other form of
+            labeling), or the rendering of multiple data series in a single
+            graphic.</p>
         </div>
 
         <div id="about">
             <h2>About</h2>
             <p>Sparky is a project by <a href="http://stamen.com/studio/shawn">Shawn Allen</a>,
-            Design Director at <a href="http://stamen.com">Stamen</a>.
+            Design Director at <a href="http://stamen.com">Stamen</a>.</p>
+
+            <h3>Open Source</h3>
+            <p>Sparky is open source and free for the taking. Feel free to
+            <a href="http://github.com/shawnbot/sparky">fork the code on Github</a>,
+            and please <a href="http://github.com/shawnbot/sparky/issues">file a bug report</a>
+            if you find a problem.</p>
 
             <h3>Dependencies</h3>
             <p>Sparky depends on <a href="http://raphaeljs.com/">Rapha&euml;l</a>
@@ -63,8 +112,37 @@
             scales and general data munging.</p>
         </div>
 
-        <script type="text/javascript" defer>
+        <script type="text/javascript">
         document.body.onload = function() {
+
+            sparky.presets.set("big", {
+                width: 500,
+                height: 100,
+                padding: 10,
+                line_stroke: "red",
+                line_stroke_width: 2,
+                dot_radius: function(d, i) {
+                    return this.last ? 5 : 0;
+                },
+                dot_fill: "red",
+                dot_stroke: "white",
+                dot_stroke_width: 1
+            });
+
+            sparky.presets.set("rainbow", {
+                padding: 5,
+                line_stroke: "none",
+                dot_radius: function() {
+                    return 1.5 + Math.random() * 3.5;
+                },
+                dot_fill: function() {
+                    var r = (~~(Math.random() * 16)).toString(16),
+                        g = (~~(Math.random() * 16)).toString(16),
+                        b = (~~(Math.random() * 16)).toString(16);
+                    return ["#", r, g, b].join("");
+                }
+            });
+
             var sparks = document.querySelectorAll(".sparkline"),
                 len = sparks.length;
             for (var i = 0; i < len; i++) {
