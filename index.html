@@ -14,7 +14,7 @@
             <h1>Sparky</h1>
 
             <p><a class="fw">Sparklines</a> are intense, simple, word-sized graphics.
-            <i>Sparky</i> is a JavaScript library that makes them easy to create and
+            Sparky is a JavaScript library that makes them easy to create and
             style. In the words of <a href="http://www.edwardtufte.com">Edward Tufte</a>,
             who coined the term:</p>
 
@@ -54,10 +54,18 @@
 
         <div id="about">
             <h2>About</h2>
-            <p><i>Sparky</i> is a project by <a href="http://stamen.com/studio/shawn">Shawn Allen</a>,
-            Design Director at <a href="http://stamen.com">Stamen</a>. It relies heavily on
-            <a href="http://mbostock.github.com/d3/">d3.js</a> and
-            <a href="http://raphaeljs.com/">Rapha&euml;l</a>.</p>
+            <p>Sparky is a project by <a href="http://stamen.com/studio/shawn">Shawn Allen</a>,
+            Design Director at <a href="http://stamen.com">Stamen</a>.
+
+            <h3>Dependencies</h3>
+            <p>Sparky depends on a couple of other JavaScript libraries:</p>
+            <ul>
+                <li><a href="http://mbostock.github.com/d3/">d3.js</a> for creating scales and working with data</li>
+                <li><a href="http://raphaeljs.com/">Rapha&euml;l</a> for cross-browser vector rendering</li>
+            </ul>
+            <p class="warning">NOTE: legacy browser support is only possible with a heavily modified
+                <a href="lib/d3-ie.min.js">build</a> of d3.js, which includes
+                <a href="http://github.com/kriskowal/es5-shim">es5-shim</a>.</p>
         </div>
 
         <script type="text/javascript" defer>
