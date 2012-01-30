@@ -6,18 +6,13 @@ html, body {
 body {
     font-family: "Hoefler Text", "Times New Roman", Georgia, serif;
     font-size: 18px;
-    line-height: 24px;
+    line-height: 23px;
     padding: 2em 3em;
 }
 
 a:link, a:visited {
     color: inherit;
     text-decoration: underline;
-}
-
-p.caption {
-    font-size: 90%;
-    font-style: italic;
 }
 
 span.sparkline {
@@ -41,6 +36,11 @@ var {
 
 p {
     margin: 0 0 1em 0;
+}
+
+p.caption {
+    font-size: 90%;
+    font-style: italic;
 }
 
 h1, h2, h3, h4, h5, h6 {

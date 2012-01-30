@@ -13,8 +13,9 @@
             <h1>Sparky</h1>
 
             <p><a class="fw">Sparklines</a> are intense, simple, word-sized graphics.
-            Sparky is a JavaScript library that makes them easy to create and
-            style. In the words of <a href="http://www.edwardtufte.com">Edward Tufte</a>,
+            Sparky is a JavaScript library for drawing them dynamically in
+            your web browser. In the words of
+            <a href="http://www.edwardtufte.com">Edward Tufte</a>,
             who coined the term:</p>
 
             <blockquote>
@@ -24,7 +25,7 @@
                 table, headline, map, spreadsheet, graphic.
             </blockquote>
 
-            <p>You can read more about sparklines on
+            <p>You can read more about sparklines and their many uses on
             <a href="http://en.wikipedia.org/wiki/Sparkline">Wikipedia</a>,
             <a href="http://www.edwardtufte.com/bboard/q-and-a-fetch-msg?msg_id=0001OR">Tufte's site</a>,
             or in his book, <a href="http://www.edwardtufte.com/tufte/books_be"><i>Beautiful Evidence</i></a>.</p>
@@ -59,7 +60,7 @@
                 <label>an elevation profile</label></p>
 
                 <p><span class="sparkline"
-                    data-points="1,1,-1,1,-1,-1,-1,1,0,-1,1,1,-1,1,-1,1,-1,-1,1,0,1,1,1,1,-1,-1,1,1,-1,1,-1,-1,1,-1,-1,0,1"
+                    data-points="1,1,0,1,0,0,0,1,.5,0,1,1,0,1,0,1,0,0,1,.5,1,1,1,1,0,0,1,1,0,1,0,0,1,0,0,.5,1"
                     data-preset="binary"></span></td>
                 <label>binary data</label></p>
 
@@ -70,7 +71,7 @@
             <h2>Features</h2>
 
             <h3>What it do</h3>
-            <p>Sparky does simple line
+            <p>Sparky supports line
             <span class="sparkline" data-preset="hilite-last" data-points="5,6,8,7,5,3,2,3,8,7"></span>,
             bar <span class="sparkline" data-preset="zero-bars" data-points="5,6,8,7,5,3,2,3,8,7"></span>, and
             area <span class="sparkline" data-preset="gray-area" data-points="5,6,8,7,5,3,2,3,8,7"></span>
@@ -80,7 +81,7 @@
             for the entire data set, or as functions to be evaluated once per
             data point.</p>
 
-            <p>Sparky can also be used to make large time series graphics:</p>
+            <p>Sparky can also render larger time series graphics:</p>
 
             <div class="sparkline"
                 data-preset="big"
@@ -116,7 +117,7 @@
         document.body.onload = function() {
 
             sparky.presets.set("big", {
-                width: 500,
+                width: 450,
                 height: 100,
                 padding: 10,
                 line_stroke: "red",

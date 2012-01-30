@@ -103,7 +103,11 @@
     sparky.sparkline = function(parent, data, options) {
         // attempt to query the document for the provided selector
         if (typeof parent === "string") {
-            parent = document.querySelector(parent);
+            var id = parent;
+            parent = document.getElementById(id) || document.querySelector(id);
+            if (!parent) {
+                throw 'No element found for "' + id + '"';
+            }
         }
         // merge defaults and options, or fetch presets
         options = (typeof options === "string")
@@ -463,9 +467,9 @@
         dot_fill:       "none",
         bar_fill:       "#333",
         bar_spacing:    .5,
-        baseline:       0,
-        min:            -1,
-        max:            +1
+        baseline:       .5,
+        min:            0,
+        max:            1
     });
 
     // internal utility functions:
