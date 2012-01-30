@@ -3,17 +3,44 @@
     <head>
         <title>Sparky</title>
         <script type="text/javascript" src="http://github.com/DmitryBaranovskiy/raphael/raw/master/raphael.js"></script>
-        <script type="text/javascript" src="../../lib/d3.ie-min.js"></script>
         <script type="text/javascript" src="../../src/sparky.js"></script>
         <style type="text/css">
-            span.sparkline {
-                display: inline-block;
-                width: 10em;
-                height: 1em;
+            @import url(../../style/screen.css);
+
+            table {
+                font-family: Monaco, Courier, monospace;
+                font-size: 12px;
+                border-collapse: collapse;
+                margin: 0 0 1em 0;
             }
+
+            td, th {
+                padding: 2px 4px 3px 4px;
+                text-align: right;
+            }
+
+            th.trend,
+            td.trend {
+                width: 60px;
+            }
+
+            th {
+                color: #666;
+                font-weight: normal;
+            }
+
         </style>
     </head>
     <body>
+
+        <h1>U.S. Unemployment, 2001-2011</h1>
+
+        <p><span class="fw">Unemployment</span> in the United States started at
+            <var>4.2%</var> in 2001, and more than doubled over the following
+            decade <span id="summary" class="sparkline"></span> to 
+            <var>8.5%</var> in December, 2011.</p>
+
+        <p>Here are the numbers for each year from the <a href="http://data.bls.gov/timeseries/LNS14000000">Bureau of Labor Statistics</a>:</p>
 
         <table id="unemployment">
             <thead>
@@ -36,6 +63,38 @@
 
         <script type="text/javascript" defer>
         document.body.onload = function() {
+            var table = document.getElementById("unemployment"),
+                thead = table.querySelector("thead tr"),
+                rows = table.querySelectorAll("tbody tr");
+
+            var header = thead.appendChild(document.createElement("th"));
+            header.setAttribute("class", "trend");
+            header.innerHTML = "trend";
+
+            var options = sparky.presets.get("hilite-peaks", {
+                width:  60,
+                height: 14
+            });
+
+            var all = [];
+
+            var rlen = rows.length;
+            for (var r = 0; r < rlen; r++) {
+                var row = rows[r],
+                    cells = row.querySelectorAll("td"),
+                    clen = cells.length,
+                    values = [];
+                for (var c = 0; c < clen; c++) {
+                    var val = values[c] = Number(cells[c].innerHTML);
+                    all.push(val);
+                }
+                var cell = row.appendChild(document.createElement("td"));
+                cell.setAttribute("class", "trend");
+                sparky.sparkline(cell, values, options);
+            }
+
+            delete options.width, options.height;
+            sparky.sparkline("#summary", all, options);
         };
         </script>
 

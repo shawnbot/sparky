@@ -100,7 +100,8 @@
             return shim;
         })();
 
-    sparky.sparkline = function(parent, data, options) {
+    sparky.sparkline = function(parent, data, config, overrides) {
+
         // attempt to query the document for the provided selector
         if (typeof parent === "string") {
             var id = parent;
@@ -109,10 +110,11 @@
                 throw 'No element found for "' + id + '"';
             }
         }
+
         // merge defaults and options, or fetch presets
-        options = (typeof options === "string")
-            ? _extend(sparky.sparkline.defaults, sparky.presets[options])
-            : _extend(sparky.sparkline.defaults, options || {});
+        var options = (typeof config === "string")
+            ? sparky.prests.get(config, overrides)
+            : _extend(sparky.sparkline.defaults, config || {});
 
         // remember the length of the data array
         var data_len = data.length;
@@ -124,10 +126,10 @@
 
         // determine the sparkline's dimensions
         var size = _size(parent),
+            // padding is the number of pixels to inset from the edges
             padding = options.padding || 0,
             width = options.width || size.width,
             height = options.height || size.height;
-        // padding is the number of pixels to inset from the edges
 
         // create the x and y scales
         var XX = lib.scale.linear()
@@ -219,6 +221,8 @@
             var bars = paper.set();
             // (and stash it on the paper object for later use)
             paper.bars = bars;
+            var did_min = false,
+                did_max = false;
             for (var i = 0; i < data_len; i++) {
                 // get the screen coordinate and the value,
                 var val = get_val(data[i]),
@@ -232,9 +236,9 @@
                         // true if it's last in the list
                         last: i == data_len - 1,
                         // true if it's >= maximum value
-                        max: val >= dmax,
+                        max: did_max ? false : (did_max = val >= dmax),
                         // true if it's <= minimum value
-                        min: val <= dmin,
+                        min: did_min ? false : (did_min = val <= dmin),
                         // true if it's above the baseline
                         above: val >= baseline,
                         // true if it's below the baseline
@@ -261,6 +265,8 @@
             var dots = paper.set();
             // (and stash it on the paper object for later use)
             paper.dots = dots;
+            var did_min = false,
+                did_max = false;
             for (var i = 0; i < data_len; i++) {
                 // get the screen coordinate and the value,
                 var point = points[i],
@@ -272,9 +278,9 @@
                         // true if it's last in the list
                         last: i == data_len - 1,
                         // true if it's >= maximum value
-                        max: val >= dmax,
+                        max: did_max ? false : (did_max = val >= dmax),
                         // true if it's <= minimum value
-                        min: val <= dmin
+                        min: did_min ? false : (did_min = val <= dmin),
                     },
                     // get the radius
                     r = dot_radius.call(meta, data[i], i);
@@ -400,18 +406,21 @@
      * sparky.presets.get("big-blue");
      */
     sparky.presets.get = function(id, options) {
-        return sparky.presets[id];
+        return _extend(sparky.presets[id], options || {});
     };
 
     /**
      * Copy a named preset and override select options:
-     * sparky.sparkline.presets.set("big-green", {
+     * sparky.sparkline.presets.extend("big-blue", "big-green", {
      *   line_stroke: "green"
      * });
      */
-    sparky.presets.extend = function(id, base, options) {
-        sparky.presets[id] = _extend(sparky.presets[base], options);
+    sparky.presets.extend = function(base, id, options) {
+        return sparky.presets[id] = _extend(sparky.presets[base], options);
     };
+
+    // defaults
+    sparky.presets.set("default", sparky.sparkline.defaults);
 
     // a nice preset for fill
     sparky.presets.set("gray-area", {
@@ -437,7 +446,7 @@
         }
     });
 
-    sparky.presets.extend("hilite-peaks", "hilite-last", {
+    sparky.presets.extend("hilite-last", "hilite-peaks", {
         dot_fill: function(d, i) {
             return (this.first || this.last)
                 ? "#f00"
