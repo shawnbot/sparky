@@ -155,37 +155,6 @@
             }
         }
 
-        // create an array of screen coordinates for each datum
-        var points = [];
-        for (var i = 0; i < data_len; i++) {
-            var x = XX(i),
-                y = YY(data[i]);
-            points.push({x: x, y: y});
-        }
-
-        // if "area_fill" was provided, push some more points onto the array
-        if (options.area_fill && options.area_fill !== "none") {
-            var bottom = YY.range()[0],
-                br = {x: XX(data_len - 1), y: bottom},
-                bl = {x: XX(0), y: bottom};
-            points.push(br);
-            points.push(bl);
-            points.push(points[0]);
-        }
-
-        var path = [];
-        for (var i = 0; i < points.length; i++) {
-            var p = points[i];
-            path.push((i === 0) ? "M" : "L", p.x, ",", p.y);
-        }
-        // path.push("Z");
-        // generate the path, and set its fill and stroke attributes
-        var line = paper.path(path.join(" "))
-            .attr("class", "line")
-            .attr("fill", options.area_fill || "none")
-            .attr("stroke", options.line_stroke || options.color || "black")
-            .attr("stroke-width", options.line_stroke_width || 1.5);
-
         // bars and dots are mutually exclusive;
         // if there's a bar_fill option, assume they want bars
         if (options.bar_fill && options.bar_fill != "none") {
@@ -197,7 +166,7 @@
                 avail_width = (width - padding * 2);
 
             // define our bar fill and positioning parameters
-            var bar_fill = lib.functor(options.bar_fill || options.color || "black"),
+            var bar_fill = lib.functor(options.bar_fill || "black"),
                 bar_spacing = isNaN(options.bar_spacing) ? 0 : options.bar_spacing,
                 bar_width = (avail_width - bar_spacing * (data_len - 1)) / data_len;
 
@@ -255,11 +224,43 @@
         // otherwise, do the dots
         } else {
 
+            // create an array of screen coordinates for each datum
+            var points = [];
+            for (var i = 0; i < data_len; i++) {
+                points.push({
+                    x: XX(i),
+                    y: YY(data[i])
+                });
+            }
+
+            // if "area_fill" was provided, push some more points onto the array
+            if (options.area_fill && options.area_fill !== "none") {
+                var bottom = YY.range()[0],
+                    br = {x: XX(data_len - 1), y: bottom},
+                    bl = {x: XX(0), y: bottom};
+                points.push(br);
+                points.push(bl);
+                points.push(points[0]);
+            }
+
+            var path = [];
+            for (var i = 0; i < points.length; i++) {
+                var p = points[i];
+                path.push((i === 0) ? "M" : "L", p.x, ",", p.y);
+            }
+            // path.push("Z");
+            // generate the path, and set its fill and stroke attributes
+            var line = paper.path(path.join(" "))
+                .attr("class", "line")
+                .attr("fill", options.area_fill || "none")
+                .attr("stroke", options.line_stroke || "black")
+                .attr("stroke-width", options.line_stroke_width || 1.5);
+
             // define our radius and color getters for dots
             var dot_radius = lib.functor(options.dot_radius),
-                dot_fill = lib.functor(options.dot_fill || options.color || "black"),
+                dot_fill = lib.functor(options.dot_fill || "black"),
                 dot_stroke = lib.functor(options.dot_stroke || "none"),
-                dot_stroke_width = lib.functor(options.dot_stroke_width || "none");
+                dot_stroke_width = lib.functor(options.dot_stroke_width || 0);
 
             // create a Raphael set for the dots
             var dots = paper.set();
@@ -327,7 +328,7 @@
         // and the "this" context is a metadata object with properties that let
         // you know if this datum is the first, last, min or max value in the
         // data array.
-        dot_fill:           "black",
+        dot_fill:           null,
         // the radius of the sparkline's dots, or a function that returns the
         // radius for each datum, as above with "dot_fill".
         dot_radius:         0,
