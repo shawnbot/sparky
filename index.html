@@ -151,7 +151,7 @@
                     data = sparky.parse.numbers(el.getAttribute("data-points")),
                     preset = sparky.presets.get(el.getAttribute("data-preset")),
                     options = sparky.util.getElementOptions(el, preset);
-                sparks[i] = sparky.sparkline(sparks[i], data, options);
+                sparky.sparkline(el, data, options);
             }
         };
         </script>
