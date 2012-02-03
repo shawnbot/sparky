@@ -149,9 +149,11 @@
             // only create a rect
             if (ry1 != ry2) {
                 rect = paper.rect(padding, ry1, width - padding * 2, ry2 - ry1)
-                    .attr("class", "range")
-                    .attr("stroke", "none")
-                    .attr("fill", options.range_fill);
+                    .attr({
+                        "class":    "range",
+                        "stroke":   "none",
+                        "fill":     options.range_fill
+                    });
             }
         }
 
@@ -215,9 +217,11 @@
                     };
                 // create the dot
                 var bar = paper.rect(x, y, bar_width, h)
-                    .attr("class", "bar")
-                    .attr("stroke", "none")
-                    .attr("fill", bar_fill.call(meta, data[i], i));
+                    .attr({
+                        "class":    "bar",
+                        "stroke":   "none",
+                        "fill":     bar_fill.call(meta, data[i], i)
+                    });
                 bars.push(bars);
             }
 
@@ -251,10 +255,12 @@
             // path.push("Z");
             // generate the path, and set its fill and stroke attributes
             var line = paper.path(path.join(" "))
-                .attr("class", "line")
-                .attr("fill", options.area_fill || "none")
-                .attr("stroke", options.line_stroke || "black")
-                .attr("stroke-width", options.line_stroke_width || 1.5);
+                .attr({
+                    "class":        "line",
+                    "fill":         options.area_fill || "none",
+                    "stroke":       options.line_stroke || "black",
+                    "stroke-width": options.line_stroke_width || 1.5
+                });
 
             // define our radius and color getters for dots
             var dot_radius = lib.functor(options.dot_radius),
@@ -289,11 +295,13 @@
                 if (r > 0 && !isNaN(r)) {
                     // create the dot
                     var dot = paper.circle(point.x, point.y)
-                        .attr("r", r)
-                        .attr("class", "dot")
-                        .attr("stroke", dot_stroke.call(meta, data[i], i))
-                        .attr("stroke-width", dot_stroke_width.call(meta, data[i], i))
-                        .attr("fill", dot_fill.call(meta, data[i], i));
+                        .attr({
+                            "r":            r,
+                            "class":        "dot",
+                            "stroke":       dot_stroke.call(meta, data[i], i),
+                            "stroke-width": dot_stroke_width.call(meta, data[i], i),
+                            "fill":         dot_fill.call(meta, data[i], i)
+                        });
                     dots.push(dot);
                 }
             }
