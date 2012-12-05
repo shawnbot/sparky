@@ -113,9 +113,7 @@
             scales and general data munging.</p>
         </div>
 
-        <script type="text/javascript">
-        document.body.onload = function() {
-
+        <script type="text/javascript" defer>
             sparky.presets.set("big", {
                 width: 450,
                 height: 100,
@@ -153,7 +151,6 @@
                     options = sparky.util.getElementOptions(el, preset);
                 sparky.sparkline(el, data, options);
             }
-        };
         </script>
 
     </body>

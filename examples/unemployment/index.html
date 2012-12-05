@@ -62,7 +62,6 @@
         </table>
 
         <script type="text/javascript" defer>
-        document.body.onload = function() {
             var table = document.getElementById("unemployment"),
                 thead = table.querySelector("thead tr"),
                 rows = table.querySelectorAll("tbody tr");
@@ -95,7 +94,6 @@
 
             delete options.width, options.height;
             sparky.sparkline("#summary", all, options);
-        };
         </script>
 
     </body>
