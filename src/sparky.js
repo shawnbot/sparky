@@ -287,7 +287,7 @@
                         // true if it's >= maximum value
                         max: did_max ? false : (did_max = val >= dmax),
                         // true if it's <= minimum value
-                        min: did_min ? false : (did_min = val <= dmin),
+                        min: did_min ? false : (did_min = val <= dmin)
                     },
                     // get the radius
                     r = dot_radius.call(meta, data[i], i);
