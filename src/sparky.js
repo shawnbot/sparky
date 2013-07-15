@@ -1,5 +1,7 @@
-(function() {
-    sparky = {version: "0.1"};
+(function(exports) {
+    var sparky = exports.sparky = {
+        version: "0.2.0"
+    };
 
     var lib = sparky.lib = (typeof d3 === "object")
         ? d3
@@ -113,7 +115,7 @@
 
         // merge defaults and options, or fetch presets
         var options = (typeof config === "string")
-            ? sparky.prests.get(config, overrides)
+            ? sparky.presets.get(config, overrides)
             : _extend(sparky.sparkline.defaults, config || {});
 
         // remember the length of the data array
@@ -517,4 +519,4 @@
         return o;
     }
 
-})();
+})(this);
