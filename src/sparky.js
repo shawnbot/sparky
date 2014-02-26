@@ -1,6 +1,6 @@
 (function(exports) {
     var sparky = exports.sparky = {
-        version: "0.2.0"
+        version: "0.2.1"
     };
 
     var lib = sparky.lib = (typeof d3 === "object")
@@ -224,7 +224,7 @@
                         "stroke":   "none",
                         "fill":     bar_fill.call(meta, data[i], i)
                     });
-                bars.push(bars);
+                bars.push(bar);
             }
 
         // otherwise, do the dots
